@@ -1,1 +1,515 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#111827">
+<title>DTT Trainer SK</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+  background:#111827;
+  color:#111827;
+}
+
+.app{
+  max-width:520px;
+  min-height:100vh;
+  margin:auto;
+  background:white;
+}
+
+header{
+  background:#111827;
+  color:white;
+  padding:25px 20px;
+}
+
+h1{
+  margin:0;
+  font-size:28px;
+}
+
+.sub{
+  margin-top:8px;
+  color:#d1d5db;
+  font-size:16px;
+}
+
+.content{
+  padding:20px;
+}
+
+.card{
+  border:1px solid #e5e7eb;
+  border-radius:18px;
+  padding:20px;
+  margin-bottom:18px;
+  box-shadow:0 3px 12px rgba(0,0,0,.06);
+}
+
+.question{
+  font-size:23px;
+  font-weight:800;
+  line-height:1.3;
+  margin-bottom:20px;
+}
+
+button{
+  width:100%;
+  border:0;
+  border-radius:14px;
+  padding:17px;
+  margin:8px 0;
+  font-size:17px;
+  font-weight:700;
+  cursor:pointer;
+  background:#e5e7eb;
+  color:#111827;
+}
+
+button:active{
+  transform:scale(.98);
+}
+
+.primary{
+  background:#2563eb;
+  color:white;
+}
+
+.correct{
+  background:#16a34a !important;
+  color:white !important;
+}
+
+.wrong{
+  background:#dc2626 !important;
+  color:white !important;
+}
+
+.info{
+  background:#f3f4f6;
+  border-radius:12px;
+  padding:14px;
+  margin-top:15px;
+  line-height:1.5;
+}
+
+.stats{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:15px;
+  font-weight:700;
+}
+
+.progress{
+  height:9px;
+  background:#e5e7eb;
+  border-radius:20px;
+  overflow:hidden;
+  margin-bottom:20px;
+}
+
+.progressbar{
+  height:100%;
+  background:#2563eb;
+  width:0%;
+}
+
+.small{
+  color:#6b7280;
+  font-size:14px;
+}
+
+.hidden{
+  display:none;
+}
+
+.mistake{
+  border-left:5px solid #dc2626;
+  padding:12px;
+  margin:10px 0;
+  background:#fef2f2;
+  border-radius:8px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<header>
+  <h1>🚗 DTT Trainer SK</h1>
+  <div class="sub">Írsky Driving Theory Test – slovenský tréning</div>
+</header>
+
+<main class="content" id="app"></main>
+
+</div>
+
+<script>
+
+const questions = [
+
+{
+ q:"Čo znamená červené svetlo na semafore?",
+ a:[
+  "Musíte zastaviť.",
+  "Môžete pokračovať, ak je cesta voľná.",
+  "Musíte zrýchliť."
+ ],
+ correct:0,
+ explanation:"Červené svetlo znamená, že musíte zastaviť."
+},
+
+{
+ q:"Čo by ste mali urobiť pred zmenou jazdného pruhu?",
+ a:[
+  "Skontrolovať zrkadlá a mŕtvy uhol a dať smerovku.",
+  "Iba zrýchliť.",
+  "Zatrúbiť a okamžite zmeniť pruh."
+ ],
+ correct:0,
+ explanation:"Pred zmenou jazdného pruhu musíte skontrolovať situáciu okolo vozidla a signalizovať svoj úmysel."
+},
+
+{
+ q:"Čo znamená značka STOP?",
+ a:[
+  "Musíte úplne zastaviť.",
+  "Stačí spomaliť.",
+  "Môžete pokračovať bez zastavenia."
+ ],
+ correct:0,
+ explanation:"Pri značke STOP musíte vozidlo úplne zastaviť."
+},
+
+{
+ q:"Prečo je dôležité udržiavať bezpečnú vzdialenosť od vozidla pred vami?",
+ a:[
+  "Aby ste mali dostatok času na zastavenie.",
+  "Aby ste mohli jazdiť rýchlejšie.",
+  "Aby ste nemuseli používať zrkadlá."
+ ],
+ correct:0,
+ explanation:"Bezpečná vzdialenosť poskytuje čas na reakciu a zastavenie."
+},
+
+{
+ q:"Čo máte urobiť, keď sa približujete k priechodu pre chodcov a chodec chce prejsť?",
+ a:[
+  "Spomaliť a umožniť chodcovi bezpečne prejsť.",
+  "Zrýchliť, aby ste prešli ako prví.",
+  "Ignorovať chodca."
+ ],
+ correct:0,
+ explanation:"Musíte jazdiť opatrne a umožniť chodcovi bezpečne prejsť."
+}
+
+];
+
+let state={
+ screen:"home",
+ index:0,
+ score:0,
+ mistakes:[]
+};
+
+const app=document.getElementById("app");
+
+function render(){
+
+ if(state.screen==="home"){
+   renderHome();
+   return;
+ }
+
+ if(state.screen==="quiz"){
+   renderQuiz();
+   return;
+ }
+
+ if(state.screen==="result"){
+   renderResult();
+   return;
+ }
+
+}
+
+function renderHome(){
+
+ app.innerHTML=`
+
+ <div class="card">
+
+   <h2>🇸🇰 DTT Trainer</h2>
+
+   <p>
+   Tréning otázok pre Irish Driving Theory Test.
+   </p>
+
+   <div class="info">
+   ⚠️ Tento tréning je určený na učenie.
+   Otázky v tejto aplikácii nie sú prezentované ako oficiálna databáza RSA.
+   </div>
+
+   <br>
+
+   <button class="primary" onclick="startQuiz()">
+   ▶️ Začať test
+   </button>
+
+ </div>
+
+ <div class="card">
+
+   <h3>📚 Ako to funguje?</h3>
+
+   <p>• 5 otázok</p>
+   <p>• odpovede A, B alebo C</p>
+   <p>• okamžité vyhodnotenie</p>
+   <p>• zaznamenanie chýb</p>
+   <p>• výsledné skóre</p>
+
+ </div>
+
+ `;
+
+}
+
+function startQuiz(){
+
+ state={
+   screen:"quiz",
+   index:0,
+   score:0,
+   mistakes:[]
+ };
+
+ render();
+
+}
+
+function renderQuiz(){
+
+ const q=questions[state.index];
+
+ const progress=((state.index)/questions.length)*100;
+
+ app.innerHTML=`
+
+ <div class="stats">
+
+   <span>Otázka ${state.index+1}/${questions.length}</span>
+
+   <span>✅ ${state.score}</span>
+
+ </div>
+
+ <div class="progress">
+   <div class="progressbar" style="width:${progress}%"></div>
+ </div>
+
+ <div class="card">
+
+   <div class="question">
+     ${q.q}
+   </div>
+
+   ${q.a.map((answer,i)=>`
+
+     <button onclick="answer(${i})">
+       ${String.fromCharCode(65+i)}. ${answer}
+     </button>
+
+   `).join("")}
+
+ </div>
+
+ `;
+
+}
+
+function answer(selected){
+
+ const q=questions[state.index];
+
+ const buttons=document.querySelectorAll("button");
+
+ buttons.forEach((button,i)=>{
+
+   if(i===q.correct){
+     button.classList.add("correct");
+   }
+
+   if(i===selected && selected!==q.correct){
+     button.classList.add("wrong");
+   }
+
+   button.disabled=true;
+
+ });
+
+ if(selected===q.correct){
+
+   state.score++;
+
+ }else{
+
+   state.mistakes.push({
+     question:q.q,
+     selected:q.a[selected],
+     correct:q.a[q.correct],
+     explanation:q.explanation
+   });
+
+ }
+
+ const info=document.createElement("div");
+
+ info.className="info";
+
+ info.innerHTML=`
+
+ <strong>
+ ${selected===q.correct ? "✅ Správne!" : "❌ Nesprávne!"}
+ </strong>
+
+ <br><br>
+
+ ${q.explanation}
+
+ <br><br>
+
+ <button class="primary" onclick="nextQuestion()">
+ ${state.index+1===questions.length ? "Zobraziť výsledok" : "Ďalšia otázka →"}
+ </button>
+
+ `;
+
+ document.querySelector(".card").appendChild(info);
+
+}
+
+function nextQuestion(){
+
+ state.index++;
+
+ if(state.index>=questions.length){
+
+   state.screen="result";
+
+ }else{
+
+   render();
+
+ }
+
+}
+
+function renderResult(){
+
+ const percentage=Math.round(
+   state.score/questions.length*100
+ );
+
+ let html=`
+
+ <div class="card">
+
+   <h2>🏁 Výsledok</h2>
+
+   <div class="question">
+   ${state.score} / ${questions.length}
+   </div>
+
+   <p>
+   Úspešnosť: <strong>${percentage}%</strong>
+   </p>
+
+ </div>
+ `;
+
+ if(state.mistakes.length===0){
+
+   html+=`
+
+   <div class="card">
+
+   <h3>🎉 Žiadne chyby!</h3>
+
+   <p>
+   Všetky otázky si zodpovedal správne.
+   </p>
+
+   </div>
+
+   `;
+
+ }else{
+
+   html+=`
+
+   <div class="card">
+
+   <h3>❌ Tvoje chyby</h3>
+
+   ${state.mistakes.map((m,i)=>`
+
+     <div class="mistake">
+
+       <strong>${i+1}. ${m.question}</strong>
+
+       <p>
+       Tvoja odpoveď:
+       <br>
+       ❌ ${m.selected}
+       </p>
+
+       <p>
+       Správna odpoveď:
+       <br>
+       ✅ ${m.correct}
+       </p>
+
+       <p class="small">
+       ${m.explanation}
+       </p>
+
+     </div>
+
+   `).join("")}
+
+   </div>
+
+   `;
+
+ }
+
+ html+=`
+
+ <button class="primary" onclick="startQuiz()">
+ 🔄 Skúsiť znova
+ </button>
+
+ <button onclick="renderHome()">
+ 🏠 Domov
+ </button>
+
+ `;
+
+ app.innerHTML=html;
+
+}
+
+render();
+
+</script>
+
+</body>
 
